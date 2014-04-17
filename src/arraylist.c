@@ -3,12 +3,18 @@
 #include <string.h>
 
 #include "arraylist.h"
+#include "iterator.h"
 
 struct CDSArrayList {
   size_t el_size;
   int arr_size;
   int arr_next;
   uint8_t *arr;
+};
+
+struct CDSArrayListIterator {
+  CDSArrayList *lst;
+  int next_idx;
 };
 
 CDSArrayList* CDSal_alloc(size_t el_size, int n) {
@@ -52,7 +58,61 @@ int CDSal_append(CDSArrayList *lst, void *el) {
   return 0;
 }
 
-void* CDSal_get(CDSArrayList *lst, int idx) {
-  if (idx < 0 || idx >= lst->arr_next) return NULL;
-  return (void *)lst->arr + (lst->el_size * idx);
+int CDSal_get(CDSArrayList *lst, int idx, void *dst) {
+  void *src;
+  if (idx < 0 || idx >= lst->arr_next) return 1;
+
+  src = (void *)lst->arr + (lst->el_size * idx);
+  memcpy(dst, src, lst->el_size);
+  return 0;
+}
+
+int CDSal_remove(CDSArrayList *lst, int idx) {
+  if (idx < 0 || idx >= lst->arr_next) return 1;
+  if (idx != lst->arr_next - 1) {
+    void *rem_el;
+    void *next_el;
+
+    rem_el = (void *)lst->arr + (lst->el_size * idx);
+    next_el = (void *)lst->arr + (lst->el_size * (idx + 1));
+
+    memmove(rem_el, next_el, (lst->arr_next - idx - 1) * lst->el_size);
+  }
+  lst->arr_next--;
+  return 0;
+}
+
+static void CDSal_iteratorFree(void *pData) {
+  free(pData);
+}
+
+static int CDSal_iteratorHasNext(void *pData) {
+  struct CDSArrayListIterator *d = (struct CDSArrayListIterator *)pData;
+
+  return d->next_idx < CDSal_size(d->lst);
+}
+
+static int CDSal_iteratorNext(void *pData, void *dst) {
+  struct CDSArrayListIterator *d = (struct CDSArrayListIterator *)pData;
+
+  return CDSal_get(d->lst, d->next_idx++, dst);
+}
+
+CDSIterator* CDSal_iterator(CDSArrayList *lst) {
+  struct CDSArrayListIterator *d = malloc(sizeof(struct CDSArrayListIterator));
+  if (!d) return NULL;
+
+  d->lst = lst;
+  d->next_idx = 0;
+
+  CDSIterator *i = CDSit_alloc(CDSal_iteratorHasNext,
+                               CDSal_iteratorNext,
+                               CDSal_iteratorFree,
+                               d);
+  if (!i) {
+    free(d);
+    return NULL;
+  } else {
+    return i;
+  }
 }

@@ -33,6 +33,6 @@ int CDSit_hasNext(CDSIterator *it) {
   return it->hasNextImpl(it->pData);
 }
 
-void * CDSit_next(CDSIterator *it) {
-  return it->nextImpl(it->pData);
+int CDSit_next(CDSIterator *it, void *dst) {
+  return it->nextImpl(it->pData, dst);
 }

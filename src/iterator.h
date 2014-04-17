@@ -3,9 +3,9 @@
 
 typedef struct CDSIterator CDSIterator;
 
-typedef int (*CDSIteratorHasNextCbk)(void *);
-typedef void *(*CDSIteratorNextCbk)(void *);
-typedef void (*CDSIteratorFreeCbk)(void *);
+typedef int (*CDSIteratorHasNextCbk)(void *pData);
+typedef int (*CDSIteratorNextCbk)(void *pData, void *dst);
+typedef void (*CDSIteratorFreeCbk)(void *pData);
 
 CDSIterator* CDSit_alloc(CDSIteratorHasNextCbk hasNextImpl,
                          CDSIteratorNextCbk nextImpl,
@@ -16,6 +16,6 @@ void CDSit_free(CDSIterator *it);
 
 int CDSit_hasNext(CDSIterator *it);
 
-void* CDSit_next(CDSIterator *it);
+int CDSit_next(CDSIterator *it, void *dst);
 
 #endif
