@@ -19,9 +19,14 @@ struct CDSArrayListIterator {
 };
 
 CDSArrayList* CDSal_alloc(size_t el_size, int n) {
-  CDSArrayList *lst = malloc(sizeof(CDSArrayList));
+  CDSArrayList *lst;
+
+  if (n<0) return NULL;
+
+  lst = malloc(sizeof(CDSArrayList));
   if (!lst) return NULL;
 
+  if (n==0) n=1;
   lst->arr = (uint8_t *) malloc(el_size * n);
   if (!lst->arr) {
     free(lst);
@@ -63,9 +68,11 @@ int CDSal_add(CDSArrayList *lst, int idx, void *el) {
     uint8_t *arr_nidx_ptr;
     arr_idx_ptr = lst->arr + (lst->el_size * idx);
     arr_nidx_ptr = lst->arr + (lst->el_size * (idx + 1));
-    memmove(arr_nidx_ptr, arr_idx_ptr, lst->arr_next - idx);
+    memmove(arr_nidx_ptr, arr_idx_ptr, (lst->arr_next - idx)*lst->el_size);
   }
   lst->arr_next++;
+
+  memcpy(arr_idx_ptr, el, lst->el_size);
   return 0;
 }
 
@@ -141,6 +148,12 @@ static int CDSal_iteratorNext(void *pData, void *dst) {
   return CDSal_get(d->lst, d->next_idx++, dst);
 }
 
+static void* CDSal_iteratorNextRef(void *pData) {
+  struct CDSArrayListIterator *d = (struct CDSArrayListIterator *)pData;
+
+  return CDSal_getRef(d->lst, d->next_idx++);
+}
+
 CDSIterator* CDSal_iterator(CDSArrayList *lst) {
   struct CDSArrayListIterator *d = malloc(sizeof(struct CDSArrayListIterator));
   if (!d) return NULL;
@@ -150,6 +163,7 @@ CDSIterator* CDSal_iterator(CDSArrayList *lst) {
 
   CDSIterator *i = CDSit_alloc(CDSal_iteratorHasNext,
                                CDSal_iteratorNext,
+                               CDSal_iteratorNextRef,
                                CDSal_iteratorFree,
                                d);
   if (!i) {
@@ -167,7 +181,9 @@ CDSIterator* CDSal_iterator(CDSArrayList *lst) {
 static void* CDSalw_cloneEmpty(void *ilst) {
   CDSArrayList *lst = (CDSArrayList *)ilst;
 
-  return CDSal_alloc(lst->el_size, 1);
+  CDSArrayList *newLst = CDSal_alloc(lst->el_size, 1);
+  if (!newLst) return NULL;
+  return CDSal_wrapAsList(newLst);
 }
 
 static void CDSalw_free(void *lst) {

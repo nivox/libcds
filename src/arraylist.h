@@ -2,6 +2,7 @@
 #define CDS_ARRAYLIST_H
 
 #include "iterator.h"
+#include "list.h"
 
 typedef struct CDSArrayList CDSArrayList;
 
@@ -10,6 +11,7 @@ void CDSal_free(CDSArrayList *lst);
 int CDSal_size(CDSArrayList *lst);
 int CDSal_add(CDSArrayList *lst, int idx, void *el);
 int CDSal_append(CDSArrayList *lst, void *el);
+int CDSal_get(CDSArrayList *lst, int idx, void *dst);
 void* CDSal_getRef(CDSArrayList *lst, int idx);
 int CDSal_remove(CDSArrayList *lst, int idx);
 CDSArrayList* CDSal_slice(CDSArrayList* lst, int start, int end);
