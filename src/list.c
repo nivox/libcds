@@ -1,5 +1,7 @@
 #include "list.h"
 
+#include <stdlib.h>
+
 void CDSl_free(CDSList *lst, int freeInnerLst) {
   if (freeInnerLst) lst->mdict->freeImpl(lst->ilst);
   free(lst);
@@ -39,13 +41,24 @@ CDSList* CDSl_slice(CDSList* lst, int start, int end) {
   if (lst->mdict->sliceImpl) {
     return lst->mdict->sliceImpl(lst->ilst, start, end);
   } else {
-    CDSList *slst = malloc(sizeof(CDSList));
-    slst->ilst->cloneEmptyImpl(lst->ilst);
-    if (!slst->mdict) {
-      free(slst);
-      return NULL;
+    if (start < 0 || end < 0) {
+      int lst_size = CDSl_size(lst);
+
+      if (start < 0) start %= lst_size;
+      if (end < 0) end %= lst_size;
     }
-    slst->mdict = lst->mdict;
+
+    CDSList *slst = lst->mdict->cloneEmptyImpl(lst->ilst);
+    if (!slst) return NULL;
+
+    CDSIterator *it = CDSl_iterator(lst);
+    int i=0;
+    void *e;
+    while(CDSit_hasNext(it) && i<end) {
+      e = CDSit_nextRef(it);
+      if (i > start) CDSl_append(slst, e);
+      i++;
+    }
     return slst;
   }
 }
