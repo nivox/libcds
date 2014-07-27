@@ -4,12 +4,14 @@
 struct CDSIterator {
   CDSIteratorHasNextCbk hasNextImpl;
   CDSIteratorNextCbk nextImpl;
+  CDSIteratorNextRefCbk nextRefImpl;
   CDSIteratorFreeCbk freeImpl;
   void *pData;
 };
 
 CDSIterator* CDSit_alloc(CDSIteratorHasNextCbk hasNextImpl,
                          CDSIteratorNextCbk nextImpl,
+                         CDSIteratorNextRefCbk nextRefImpl,
                          CDSIteratorFreeCbk freeImpl,
                          void *pData)
 {
@@ -18,6 +20,7 @@ CDSIterator* CDSit_alloc(CDSIteratorHasNextCbk hasNextImpl,
 
   it->hasNextImpl = hasNextImpl;
   it->nextImpl = nextImpl;
+  it->nextRefImpl = nextRefImpl;
   it->freeImpl = freeImpl;
   it->pData = pData;
 
@@ -35,4 +38,8 @@ int CDSit_hasNext(CDSIterator *it) {
 
 int CDSit_next(CDSIterator *it, void *dst) {
   return it->nextImpl(it->pData, dst);
+}
+
+void* CDSit_nextRef(CDSIterator *it) {
+  return it->nextRefImpl(it->pData);
 }
