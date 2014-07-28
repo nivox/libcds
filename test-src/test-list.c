@@ -60,10 +60,73 @@ QCC_TestStatus listAddHead(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
   // Testing correct creation
   QCC_TestStatus res = CDSl_size(l) == vals[0]->n;
   for (i=vals[0]->n-1; i>=0; i--) {
-    int el = *(int*)CDSl_getRef(l, vals[0]->n-1 - i);
-    res = QCC_and(res, el == array[i]);
+    res = QCC_and(res, *(int*)CDSl_getRef(l, vals[0]->n-1 - i) == array[i]);
   }
 
+  CDSl_free(l, 1);
+  return res;
+}
+
+QCC_TestStatus listAddScattered(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
+  int *array = QCC_getValue(vals, 0, int*);
+
+  if (vals[0]->n <= 1) QCC_label(stamps, "trivial");
+
+  int allDifferent = 1;
+  int i,j;
+  for (i=0; i<vals[0]->n; i++) {
+    for (j=0; j<vals[0]->n; j++)
+      allDifferent = i != j ? array[i] != array[j] : 1;
+  }
+
+  if (!allDifferent) return QCC_NOTHING;
+  CDSList *l = currentListAllocator(sizeof(int));
+  for (i=0; i<vals[0]->n; i++) {
+    int idx = 0;
+    if (CDSl_size(l) > 0) {
+      idx = array[i] % CDSl_size(l);
+      idx = idx < 0 ? idx * -1 : idx;
+    }
+    CDSl_add(l, idx, &array[i]);
+  }
+
+  QCC_TestStatus res = CDSl_size(l) == vals[0]->n;
+  for (i=0; i<vals[0]->n; i++) {
+    int el = *(int*)CDSl_getRef(l, i);
+    int found = 0;
+
+    for (j=0; j<vals[0]->n; j++) found = found || el == array[j];
+    res = QCC_and(res, found);
+  }
+
+  CDSl_free(l, 1);
+  return res;
+}
+
+QCC_TestStatus listIterationGet(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
+  int *array = QCC_getValue(vals, 0, int*);
+
+  if (vals[0]->n <= 1) QCC_label(stamps, "trivial");
+  CDSList *l = castToList(array, vals[0]->n, sizeof(int));
+
+  CDSIterator *it = CDSl_iterator(l);
+  int i=0;
+  QCC_TestStatus res = QCC_OK;
+  while(CDSit_hasNext(it)) {
+    int elIt;
+    int elGet;
+    int *elGetRef;
+
+    CDSit_next(it, &elIt);
+    CDSl_get(l, i, &elGet);
+    elGetRef = (int*) CDSl_getRef(l, i);
+
+    res = QCC_and(res, elIt == elGet && elGet == *elGetRef);
+    i++;
+  }
+  CDSit_free(it);
+
+  res = QCC_and(res, i == vals[0]->n);
   CDSl_free(l, 1);
   return res;
 }
@@ -93,5 +156,14 @@ int main(int argc, char **argv) {
 
     printf("- listAddHead:\n");
     QCC_testForAll(100, 1000, listAddHead, 1, QCC_genArrayInt);
+
+    printf("- listAddScattered:\n");
+    QCC_testForAll(100, 1000, listAddScattered, 1, QCC_genArrayInt);
+
+    printf("- listIterationGet:\n");
+    QCC_testForAll(100, 1000, listIterationGet, 1, QCC_genArrayInt);
+
   }
+
+  return 0;
 }
