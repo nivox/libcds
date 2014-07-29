@@ -13,6 +13,7 @@ typedef void* (*CDSListGetRefImpl)(void *ilst, int idx);
 typedef int (*CDSListRemoveImpl)(void *ilst, int idx);
 typedef void* (*CDSListSliceImpl)(void *ilst, int start, int end);
 typedef CDSIterator* (*CDSListIteratorImpl)(void *ilst);
+typedef void* (*CDSListWrapImpl)(void *ilst);
 
 struct CDSListMethodsDict {
   /** Required */
@@ -33,6 +34,8 @@ struct CDSListMethodsDict {
   CDSListSliceImpl sliceImpl;
   /** Required */
   CDSListIteratorImpl iteratorImpl;
+  /** Required */
+  CDSListWrapImpl wrapImpl;
 };
 
 typedef struct CDSList {

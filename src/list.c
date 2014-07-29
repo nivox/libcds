@@ -39,7 +39,8 @@ int CDSl_remove(CDSList *lst, int idx) {
 
 CDSList* CDSl_slice(CDSList* lst, int start, int end) {
   if (lst->mdict->sliceImpl) {
-    return lst->mdict->sliceImpl(lst->ilst, start, end);
+    void *ilst = lst->mdict->sliceImpl(lst->ilst, start, end);
+    return lst->mdict->wrapImpl(ilst);
   } else {
     if (start < 0 || end < 0) {
       int lst_size = CDSl_size(lst);
