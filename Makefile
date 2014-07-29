@@ -1,4 +1,6 @@
-CFLAGS += -Wall -std=c99 -g
+CFLAGS += -Wall -g
+
+CDS_CFLAGS = -std=c99
 
 LD = gcc
 
@@ -12,6 +14,9 @@ LIBCDS_OBJS = $(CDS_SRCDIR)/list.o $(CDS_SRCDIR)/arraylist.o $(CDS_SRCDIR)/itera
 libcds.a: $(LIBCDS_OBJS)
 	ar rc $@ $^
 	ranlib $@
+
+$(CDS_SRCDIR)/%.o: $(CDS_SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(CDS_CFLAGS) -I $(CDS_SRCDIR) -c -o $@ $<
 
 $(TEST_SRCDIR)/%.o: $(TEST_SRCDIR)/%.c
 	$(CC) $(CFLAGS) -I $(CDS_SRCDIR) -c -o $@ $<
