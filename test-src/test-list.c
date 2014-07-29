@@ -131,6 +131,79 @@ QCC_TestStatus listIterationGet(QCC_GenValue **vals, int len, QCC_Stamp **stamps
   return res;
 }
 
+QCC_TestStatus listGetNegative(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
+  int *array = QCC_getValue(vals, 0, int*);
+  int idx = *QCC_getValue(vals, 1, int*);
+
+  CDSList *l = castToList(array, vals[0]->n, sizeof(int));
+
+  if (vals[0]->n != 0) idx = idx % vals[0]->n;
+
+  QCC_TestStatus res = QCC_imply(vals[0]->n > 0 && idx < 0,
+                                 array[vals[0]->n + idx] == *((int *) CDSl_getRef(l, idx)));
+  CDSl_free(l, 1);
+  return res;
+}
+
+QCC_TestStatus listRemove(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
+  int *array = QCC_getValue(vals, 0, int*);
+  int idx = *QCC_getValue(vals, 1, int*);
+
+  CDSList *l = castToList(array, vals[0]->n, sizeof(int));
+
+  if (vals[0]->n == 0) {
+    CDSl_free(l, 1);
+    return QCC_NOTHING;
+  }
+
+  idx = idx % vals[0]->n;
+
+  CDSl_remove(l, idx);
+  if (CDSl_size(l) != vals[0]->n - 1) {
+    CDSl_free(l, 1);
+    return QCC_FAIL;
+  }
+  QCC_TestStatus res = QCC_OK;
+  if (idx < 0) idx = vals[0]->n + idx;
+  int i,li;
+  for (i=0; i<vals[0]->n; i++) {
+    if (i == idx) continue;
+    else if (i < idx) li = i;
+    else if (i > idx) li = i-1;
+    res = QCC_and(res, array[i] == *((int *) CDSl_getRef(l, li)));
+  }
+
+  CDSl_free(l, 1);
+  return res;
+}
+
+QCC_TestStatus listSlice(QCC_GenValue **vals, int len, QCC_Stamp **stamps) {
+  int *array = QCC_getValue(vals, 0, int*);
+  int start = *QCC_getValue(vals, 1, int*);
+  int end = *QCC_getValue(vals, 2, int*);
+
+  if (vals[0]->n == 0) return QCC_NOTHING;
+  start %= vals[0]->n;
+  int rstart = start < 0 ? vals[0]->n + start : start;
+  end %= vals[0]->n;
+  int rend = end < 0 ? vals[0]->n + end: end;
+  if (rstart >= rend) return QCC_NOTHING;
+
+  CDSList *l = castToList(array, vals[0]->n, sizeof(int));
+  CDSList *ls = CDSl_slice(l, start, end);
+  int i,j;
+  QCC_TestStatus res=CDSl_size(ls) == rend-rstart;
+  for(i=rstart, j=0; i<rend; i++,j++) {
+    int av = array[i];
+    int lv = *((int *) CDSl_getRef(ls, j));
+    res = QCC_and(res, av == lv);
+  }
+
+  CDSl_free(l, 1);
+  CDSl_free(ls, 1);
+  return res;
+}
+
 /*************************************************************
  * Main test logic
  *************************************************************/
@@ -162,6 +235,15 @@ int main(int argc, char **argv) {
 
     printf("- listIterationGet:\n");
     QCC_testForAll(100, 1000, listIterationGet, 1, QCC_genArrayInt);
+
+    printf("- listGetNegative:\n");
+    QCC_testForAll(100, 1000, listGetNegative, 2, QCC_genArrayInt, QCC_genInt);
+
+    printf("- listRemove:\n");
+    QCC_testForAll(100, 1000, listRemove, 2, QCC_genArrayInt, QCC_genInt);
+
+    printf("- listSlice:\n");
+    QCC_testForAll(100, 1000, listSlice, 3, QCC_genArrayInt, QCC_genInt, QCC_genInt);
 
   }
 
