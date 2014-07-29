@@ -51,7 +51,10 @@ int CDSal_size(CDSArrayList *lst) {
 
 int CDSal_add(CDSArrayList *lst, int idx, void *el) {
   if (idx > lst->arr_next) return 1;
-  if (idx < 0) idx %= lst->arr_next;
+  if (idx < 0) {
+    idx = lst->arr_next + idx;
+    if (idx < 0) return 1;
+  }
 
   if (lst->arr_next >= lst->arr_size) {
     int nsize = lst->arr_size * 2;
@@ -83,7 +86,10 @@ int CDSal_append(CDSArrayList *lst, void *el) {
 int CDSal_get(CDSArrayList *lst, int idx, void *dst) {
   void *src;
   if (idx >= lst->arr_next) return 1;
-  if (idx < 0) idx %= lst->arr_next;
+  if (idx < 0) {
+    idx = lst->arr_next + idx;
+    if (idx < 0) return 1;
+  }
 
   src = (void *)lst->arr + (lst->el_size * idx);
   memcpy(dst, src, lst->el_size);
@@ -92,14 +98,20 @@ int CDSal_get(CDSArrayList *lst, int idx, void *dst) {
 
 void* CDSal_getRef(CDSArrayList *lst, int idx) {
   if (idx >= lst->arr_next) return NULL;
-  if (idx < 0) idx %= lst->arr_next;
+  if (idx < 0) {
+    idx = lst->arr_next + idx;
+    if (idx < 0) return NULL;
+  }
 
   return (void *)lst->arr + (lst->el_size * idx);
 }
 
 int CDSal_remove(CDSArrayList *lst, int idx) {
   if (idx >= lst->arr_next) return 1;
-  if (idx < 0) idx %= lst->arr_next;
+  if (idx < 0) {
+    idx = lst->arr_next + idx;
+    if (idx < 0) return 1;
+  }
   if (idx != lst->arr_next - 1) {
     void *rem_el;
     void *next_el;
@@ -115,11 +127,22 @@ int CDSal_remove(CDSArrayList *lst, int idx) {
 
 CDSArrayList* CDSal_slice(CDSArrayList* lst, int start, int end) {
   int len;
-  if (start < 0) start %= lst->arr_next;
-  if (end < 0) end %= lst->arr_next;
+  if (start >= lst->arr_next) return NULL;
+  if (start < 0) {
+    start = lst->arr_next + start;
+    if (start < 0) return NULL;
+  }
+
+  if (end > lst->arr_next)return NULL;
+  if (end < 0){
+    end = lst->arr_next + end;
+    if (end < 0) return NULL;
+  }
+
+  if (start >= end) return NULL;
 
   if (start >= lst->arr_next || end >= lst->arr_next || start >= end) return NULL;
-  len = end - start - 1;
+  len = end - start;
   CDSArrayList *slst =  CDSal_alloc(lst->el_size, len);
   if (!slst) return NULL;
 
