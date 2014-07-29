@@ -245,6 +245,10 @@ static CDSIterator* CDSalw_iterator(void *lst) {
   return CDSal_iterator((CDSArrayList *)lst);
 }
 
+static void* CDSalw_wrap(void *lst) {
+  return CDSal_wrapAsList((CDSArrayList *)lst);
+}
+
 struct CDSListMethodsDict CDSal_mdict = {
   .cloneEmptyImpl = CDSalw_cloneEmpty,
   .freeImpl = CDSalw_free,
@@ -255,7 +259,8 @@ struct CDSListMethodsDict CDSal_mdict = {
   .getRefImpl = CDSalw_getRef,
   .removeImpl = CDSalw_remove,
   .sliceImpl = CDSalw_slice,
-  .iteratorImpl = CDSalw_iterator
+  .iteratorImpl = CDSalw_iterator,
+  .wrapImpl = CDSalw_wrap
 };
 
 CDSList* CDSal_wrapAsList(CDSArrayList *lst) {
