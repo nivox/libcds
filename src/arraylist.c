@@ -139,8 +139,6 @@ CDSArrayList* CDSal_slice(CDSArrayList* lst, int start, int end) {
     if (end < 0) return NULL;
   }
 
-  if (start >= end) return NULL;
-
   if (start >= lst->arr_next || end >= lst->arr_next || start >= end) return NULL;
   len = end - start;
   CDSArrayList *slst =  CDSal_alloc(lst->el_size, len);
