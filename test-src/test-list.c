@@ -5,6 +5,7 @@
 #include "../src/iterator.h"
 #include "../src/list.h"
 #include "../src/arraylist.h"
+#include "../src/linkedlist.h"
 
 
 typedef CDSList* (*listAlloc)(size_t el_size);
@@ -16,6 +17,11 @@ listAlloc currentListAllocator = NULL;
 CDSList* arrayListAlloc(size_t el_size) {
   CDSArrayList *l = CDSal_alloc(el_size, 0);
   return CDSal_wrapAsList(l);
+}
+
+CDSList* linkedListAlloc(size_t el_size) {
+  CDSLinkedList *l = CDSll_alloc(el_size);
+  return CDSll_wrapAsList(l);
 }
 
 CDSList* castToList(void *arr, int n, size_t el_size) {
@@ -214,7 +220,8 @@ struct ListImplInfo {
 
 int main(int argc, char **argv) {
   struct ListImplInfo infoArr[] = {
-    (struct ListImplInfo) { .name="ArrayList", .alloc=arrayListAlloc }
+    (struct ListImplInfo) { .name="ArrayList", .alloc=arrayListAlloc },
+    (struct ListImplInfo) { .name="LinkedList", .alloc=linkedListAlloc }
   };
 
   int i;
