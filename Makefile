@@ -9,7 +9,10 @@ TEST_SRCDIR = ./test-src
 
 TESTS = test-list
 
-LIBCDS_OBJS = $(CDS_SRCDIR)/list.o $(CDS_SRCDIR)/arraylist.o $(CDS_SRCDIR)/iterator.o
+LIBCDS_OBJS = $(CDS_SRCDIR)/list.o \
+	$(CDS_SRCDIR)/arraylist.o \
+	$(CDS_SRCDIR)/linkedlist.o \
+	$(CDS_SRCDIR)/iterator.o
 
 libcds.a: $(LIBCDS_OBJS)
 	ar rc $@ $^
