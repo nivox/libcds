@@ -46,6 +46,7 @@ void CDSll_free(CDSLinkedList *lst) {
     free(e);
     e = n;
   }
+  free(lst);
 }
 
 int CDSll_size(CDSLinkedList *lst) {
@@ -59,12 +60,12 @@ int CDSll_add(CDSLinkedList *lst, int idx, void *el) {
     if (idx < 0) return 1;
   }
 
-  CDSLLEntry *e = lst->head;
-  CDSLLEntry *ep = NULL;
+  CDSLLEntry *nextN = lst->head;
+  CDSLLEntry *prevN = NULL;
   int i;
   for (i=0; i<idx; i++) {
-    ep = e;
-    e = e->next;
+    prevN = nextN;
+    nextN = nextN->next;
   }
 
   CDSLLEntry *n = malloc(sizeof(CDSLLEntry));
@@ -78,15 +79,21 @@ int CDSll_add(CDSLinkedList *lst, int idx, void *el) {
 
   memcpy(n->value, el, lst->el_size);
 
-  if (e != NULL) {
-    n->prev = e->prev;
-    e->prev = n;
-    n->next = e;
-  } else lst->tail = n;
+  if (nextN != NULL) {
+    n->next = nextN;
+    nextN->prev = n;
+  } else {
+    lst->tail = n;
+    n->next = NULL;
+  }
 
-  if (ep != NULL) {
-    ep->next = n;
-  } else lst->head = n;
+  if (prevN != NULL) {
+    prevN->next = n;
+    n->prev = prevN;
+  } else {
+    lst->head = n;
+    n->prev = NULL;
+  }
 
   lst->len++;
   return 0;
@@ -128,12 +135,19 @@ int CDSll_remove(CDSLinkedList *lst, int idx) {
   for (i=0; i<idx; i++) e=e->next;
 
   if (e->prev) e->prev->next = e->next;
-  else lst->head = e->next;
+  else {
+    lst->head = e->next;
+    if (e->next) e->next->prev = NULL;
+  }
 
   if (e->next) e->next->prev = e->prev;
-  else lst->tail = e->prev;
+  else {
+    lst->tail = e->prev;
+    if (e->prev) e->prev->next = NULL;
+  }
 
   free(e->value);
+  free(e);
   lst->len--;
   return 0;
 }
@@ -174,7 +188,7 @@ static void CDSll_iteratorFree(void *pData) {
 static int CDSll_iteratorHasNext(void *pData) {
   struct CDSLinkedListIterator *d = (struct CDSLinkedListIterator *)pData;
 
-  return d->e != NULL && d->e->next != NULL;
+  return d->e != NULL;
 }
 
 static int CDSll_iteratorNext(void *pData, void *dst) {
@@ -182,6 +196,7 @@ static int CDSll_iteratorNext(void *pData, void *dst) {
 
   if (d->e == NULL) return 1;
   memcpy(dst, d->e->value, d->lst->el_size);
+  d->e = d->e->next;
   return 0;
 }
 
@@ -189,6 +204,7 @@ static void* CDSll_iteratorNextRef(void *pData) {
   struct CDSLinkedListIterator *d = (struct CDSLinkedListIterator *)pData;
 
   if (d->e == NULL) return NULL;
+  d->e = d->e->next;
   return d->e->value;
 }
 
