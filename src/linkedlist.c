@@ -53,6 +53,35 @@ int CDSll_size(CDSLinkedList *lst) {
   return lst->len;
 }
 
+
+static CDSLLEntry* CDSll_seekToIdx(CDSLinkedList *lst, int idx, CDSLLEntry **prev, CDSLLEntry **next) {
+  CDSLLEntry *e = NULL;
+  int i;
+
+  if (idx > lst->len/2) {
+    CDSLLEntry *p = lst->tail;
+    e = NULL;
+    if (next) *next = NULL;
+    for (i=lst->len; i>idx; i--) {
+      if (next) *next = e;
+      e = p;
+      p = p->prev;
+    }
+    if (prev) *prev = p;
+  } else {
+    e = lst->head;
+    if (prev) *prev = NULL;
+    for (i=0; i<idx; i++) {
+      if (prev) *prev = e;
+      e = e->next;
+    }
+    if (next) *next = e != NULL ? e->next : NULL;
+  }
+
+  return e;
+}
+
+
 int CDSll_add(CDSLinkedList *lst, int idx, void *el) {
   if (idx > lst->len) return 1;
   if (idx < 0) {
@@ -60,13 +89,8 @@ int CDSll_add(CDSLinkedList *lst, int idx, void *el) {
     if (idx < 0) return 1;
   }
 
-  CDSLLEntry *nextN = lst->head;
   CDSLLEntry *prevN = NULL;
-  int i;
-  for (i=0; i<idx; i++) {
-    prevN = nextN;
-    nextN = nextN->next;
-  }
+  CDSLLEntry *nextN = CDSll_seekToIdx(lst, idx, &prevN, NULL);
 
   CDSLLEntry *n = malloc(sizeof(CDSLLEntry));
   if (!n) return 1;
@@ -117,9 +141,7 @@ void* CDSll_getRef(CDSLinkedList *lst, int idx) {
     if (idx < 0) return NULL;
   }
 
-  CDSLLEntry *e = lst->head;
-  int i;
-  for (i=0; i<idx; i++) e=e->next;
+  CDSLLEntry *e = CDSll_seekToIdx(lst, idx, NULL, NULL);
   return e->value;
 }
 
@@ -130,9 +152,7 @@ int CDSll_remove(CDSLinkedList *lst, int idx) {
     if (idx < 0) return 1;
   }
 
-  CDSLLEntry *e = lst->head;
-  int i;
-  for (i=0; i<idx; i++) e=e->next;
+  CDSLLEntry *e = CDSll_seekToIdx(lst, idx, NULL, NULL);
 
   if (e->prev) e->prev->next = e->next;
   else {
